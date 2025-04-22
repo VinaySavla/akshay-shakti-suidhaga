@@ -473,7 +473,7 @@ export default function Marketplace() {
               <p className="text-rose-700">Discover our handpicked selection of artisanal products</p>
             </div>
             <button className="mt-4 md:mt-0 px-6 py-2 bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700">
-              Explore Now
+              Add Product
             </button>
           </div>
         </div>
