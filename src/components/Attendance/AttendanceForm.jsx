@@ -1,73 +1,130 @@
+// components/Attendance/AttendanceForm.js
 import { useState } from "react";
 
-export default function AttendanceForm() {
-    const [batch, setBatch] = useState("");
-    const [date, setDate] = useState("");
+export default function AttendanceForm({ students, batchId, locationId, batchName, locationName }) {
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [attendance, setAttendance] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [message, setMessage] = useState(null);
 
-    const students = [
-        { id: 1, name: "Anjali Gupta" },
-        { id: 2, name: "Neha Sharma" },
-        { id: 3, name: "Pooja Verma" },
-    ];
+    // Initialize attendance state with all students marked absent
+    useState(() => {
+        const initialAttendance = {};
+        students.forEach(student => {
+            initialAttendance[student.id] = false;
+        });
+        setAttendance(initialAttendance);
+    }, [students]);
 
-    const handleAttendanceChange = (id) => {
-        setAttendance((prev) => ({
+    const handleAttendanceChange = (studentId, isPresent) => {
+        setAttendance(prev => ({
             ...prev,
-            [id]: !prev[id],
+            [studentId]: isPresent
         }));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log("Attendance Data:", { batch, date, attendance });
-        alert("Attendance submitted successfully!");
+        setIsSubmitting(true);
+
+        // Create attendance record
+        const attendanceRecord = {
+            date,
+            locationId,
+            locationName,
+            batchId,
+            batchName,
+            records: Object.entries(attendance).map(([studentId, isPresent]) => {
+                const student = students.find(s => s.id === studentId);
+                return {
+                    studentId,
+                    studentName: student.name,
+                    rollNo: student.rollNo,
+                    isPresent
+                };
+            })
+        };
+
+        // Simulate API call
+        setTimeout(() => {
+            console.log("Attendance submitted:", attendanceRecord);
+            setMessage({ type: "success", text: "Attendance recorded successfully!" });
+            setIsSubmitting(false);
+        }, 1000);
     };
 
     return (
-        <div className="bg-white shadow-md p-6 rounded-lg">
-            <h2 className="text-2xl font-bold">Mark Attendance</h2>
-            <form onSubmit={handleSubmit} className="mt-4">
-                <label className="block font-medium">Select Batch:</label>
-                <select
-                    className="w-full p-2 border rounded mt-1"
-                    value={batch}
-                    onChange={(e) => setBatch(e.target.value)}
-                    required
-                >
-                    <option value="">Select Batch</option>
-                    <option value="Batch A">Batch A</option>
-                    <option value="Batch B">Batch B</option>
-                </select>
-
-                <label className="block font-medium mt-4">Select Date:</label>
-                <input
-                    type="date"
-                    className="w-full p-2 border rounded mt-1"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    required
-                />
-
-                <h3 className="text-lg font-semibold mt-4">Students:</h3>
-                <div className="mt-2">
-                    {students.map((student) => (
-                        <div key={student.id} className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                id={`student-${student.id}`}
-                                checked={!!attendance[student.id]}
-                                onChange={() => handleAttendanceChange(student.id)}
-                            />
-                            <label htmlFor={`student-${student.id}`} className="cursor-pointer">
-                                {student.name}
-                            </label>
-                        </div>
-                    ))}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold mb-4">Record Attendance</h2>
+            <div className="mb-4">
+                <p className="font-medium">Location: <span className="font-normal">{locationName}</span></p>
+                <p className="font-medium">Batch: <span className="font-normal">{batchName}</span></p>
+            </div>
+            
+            <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                    <label className="block text-gray-700 mb-2">Date:</label>
+                    <input 
+                        type="date" 
+                        value={date} 
+                        onChange={(e) => setDate(e.target.value)}
+                        className="w-full p-2 border rounded-md"
+                        required
+                    />
                 </div>
 
-                <button type="submit" className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
-                    Submit Attendance
+                <div className="mb-6">
+                    <h3 className="text-lg font-medium mb-3">Students</h3>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full bg-white border">
+                            <thead>
+                                <tr className="bg-gray-100">
+                                    <th className="py-2 px-4 border text-left">Roll No</th>
+                                    <th className="py-2 px-4 border text-left">Name</th>
+                                    <th className="py-2 px-4 border text-center">Present</th>
+                                    <th className="py-2 px-4 border text-center">Absent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {students.map(student => (
+                                    <tr key={student.id}>
+                                        <td className="py-2 px-4 border">{student.rollNo}</td>
+                                        <td className="py-2 px-4 border">{student.name}</td>
+                                        <td className="py-2 px-4 border text-center">
+                                            <input 
+                                                type="radio" 
+                                                name={`attendance-${student.id}`}
+                                                checked={attendance[student.id] === true}
+                                                onChange={() => handleAttendanceChange(student.id, true)}
+                                            />
+                                        </td>
+                                        <td className="py-2 px-4 border text-center">
+                                            <input 
+                                                type="radio" 
+                                                name={`attendance-${student.id}`}
+                                                checked={attendance[student.id] === false}
+                                                onChange={() => handleAttendanceChange(student.id, false)}
+                                            />
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {message && (
+                    <div className={`p-3 mb-4 rounded-md ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {message.text}
+                    </div>
+                )}
+
+                <button 
+                    type="submit" 
+                    className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? 'Submitting...' : 'Submit Attendance'}
                 </button>
             </form>
         </div>

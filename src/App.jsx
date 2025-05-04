@@ -15,8 +15,6 @@ import AdvancedTailoring from "./pages/AdvancedTailoring";
 import BusinessSkills from "./pages/BusinessSkills";
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
     <Routes>
       <Route path="/" element={<Home />} />
